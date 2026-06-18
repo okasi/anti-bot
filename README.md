@@ -12,7 +12,7 @@ One library. Three layers of defense. Zero external API keys.
 [![CI](https://github.com/okasi/is-suspicious-client/actions/workflows/ci.yml/badge.svg)](https://github.com/okasi/is-suspicious-client/actions/workflows/ci.yml)
 [![IP data updates](https://github.com/okasi/is-suspicious-client/actions/workflows/update-ip-data.yml/badge.svg)](https://github.com/okasi/is-suspicious-client/actions/workflows/update-ip-data.yml)
 
-[Quick start](#quick-start) · [Detection modes](#detection-modes) · [Examples](#examples) · [API](docs/API.md) · [Integration guides](docs/INTEGRATION.md) · [All signals](docs/SIGNALS.md)
+[Quick start](#quick-start) · [Detection modes](#detection-modes) · [Signals](#signals) · [API](#api) · [Examples](#examples) · [FAQ](#faq)
 
 </div>
 
@@ -49,7 +49,6 @@ import { detectInstantClient } from "is-suspicious-client";
 const result = detectInstantClient(window);
 
 if (!result.isLegitClient) {
-  // WebDriver, Selenium, headless signals, etc.
   window.location.href = "/blocked";
 }
 ```
@@ -76,8 +75,7 @@ if (!result.isLegitClient) {
 ```ts
 import { createBehavioralClientDetector } from "is-suspicious-client";
 
-const detector = createBehavioralClientDetector({ context: window });
-const result = await detector.observe(10_000);
+const result = await createBehavioralClientDetector({ context: window }).observe(10_000);
 
 if (!result.isLegitClient) {
   console.warn("Robotic behavior", result.suspicionScore);
@@ -91,20 +89,18 @@ if (!result.isLegitClient) {
 ```mermaid
 flowchart LR
   subgraph Browser
-    A[Instant<br/>0ms] --> B{Pass?}
-    B -->|yes| C[Behavioral<br/>5–30s]
-    B -->|no| X[Block / challenge]
+    A[Instant] --> B{Pass?}
+    B -->|yes| C[Behavioral]
+    B -->|no| X[Block]
     C --> D{Pass?}
     D -->|yes| E[Allow]
     D -->|no| X
   end
-
   subgraph Server
     S[detectServerClientAsync] --> T{Pass?}
     T -->|yes| E
     T -->|no| X
   end
-
   Browser -->|beacon + headers| Server
 ```
 
@@ -112,34 +108,21 @@ flowchart LR
 |------|-----|-------|-------------|
 | **Instant** | `detectInstantClient` | Immediate | Browser |
 | **Instant+** | `detectInstantClientAsync` | ~50ms | Browser (adds WebGPU check) |
-| **Behavioral** | `createBehavioralClientDetector` | 5–30s observation | Browser |
-| **Server** | `detectServerClientAsync` | ~1–5ms per IP | Node, Deno, edge |
+| **Behavioral** | `createBehavioralClientDetector` | 5–30s | Browser |
+| **Server** | `detectServerClientAsync` | ~1–5ms per IP | Node, edge |
 
-<details>
-<summary><strong>Instant detection</strong> — 17 environment checks</summary>
+### Instant
 
-Runs synchronously against `window`. Ideal for first-pass gating.
+Runs synchronously against `window`. Async variant adds WebGPU `shader-f16` validation on Chromium.
 
 ```ts
-import { detectInstantClient, detectInstantClientAsync } from "is-suspicious-client";
-
-// Sync — use on page load
 const sync = detectInstantClient(window);
-
-// Async — adds WebGPU shader-f16 validation on Chromium
 const async = await detectInstantClientAsync(window);
 ```
 
-**Highlights:** `navigator.webdriver`, Selenium/Playwright artifacts, SwiftShader WebGL, missing `chrome.runtime`, suspicious window dimensions, patched webdriver descriptor, and more.
+### Behavioral
 
-→ [Full instant signal list](docs/SIGNALS.md#instant-signals)
-
-</details>
-
-<details>
-<summary><strong>Behavioral detection</strong> — weighted interaction scoring</summary>
-
-Observes mouse, scroll, and keyboard events. Produces a **suspicion score** (0–1) using `1 - Π(1 - weight)` across triggered signals.
+Observes mouse, scroll, and keyboard events. Score: `1 - Π(1 - weight)` across triggered signals.
 
 ```ts
 const detector = createBehavioralClientDetector({
@@ -147,138 +130,82 @@ const detector = createBehavioralClientDetector({
   scoreThreshold: 0.55,
   onUpdate: (r) => console.log(r.suspicionScore),
 });
-
 await detector.observe(8_000);
 ```
 
-**Catches:** linear mouse paths, cursor teleports, clicks without movement, robotic typing intervals, `isTrusted === false` events.
+### Server
 
-→ [Full behavioral signal list](docs/SIGNALS.md#behavioral-signals)
-
-</details>
-
-<details>
-<summary><strong>Server detection</strong> — IP, TLS, timezone, blocklists</summary>
-
-Pass `clientIp` and the library automatically:
-
-1. Looks up **country + timezone** via [`doc999tor-fast-geoip`](https://www.npmjs.com/package/doc999tor-fast-geoip)
-2. Checks **datacenter ranges** ([ipcat](https://github.com/client9/ipcat) — AWS, OVH, Hetzner, …)
-3. Matches **AbuseIPDB** 30-day blocklist (~139k IPs, all countries)
-4. Checks **iCloud Private Relay** egress ranges (~287k CIDRs, all countries)
-5. Validates **TLS fingerprint** vs User-Agent (JA3 blocklist for Python, curl, Go, …)
-6. Compares **client timezone** vs GeoIP timezone
+Pass `clientIp` to auto-run GeoIP lookup, datacenter range check, AbuseIPDB blocklist, iCloud Private Relay check, TLS validation, and timezone comparison.
 
 ```ts
 const result = await detectServerClientAsync({
-  clientIp: "203.0.113.1",
-  clientTimezone: "Europe/Berlin",
-  tlsFingerprint: "e7d705a3286e19ea42f587b344ee6865",
+  clientIp: req.ip,
+  clientTimezone: req.headers["x-timezone"],
+  tlsFingerprint: req.headers["x-ja3-hash"],
   userAgent: req.headers["user-agent"],
 });
 ```
 
-**Bundled data** is refreshed weekly by GitHub Actions. Run locally: `npm run update:ip-data`.
-
-→ [Full server signal list](docs/SIGNALS.md#server-signals) · [Integration guides](docs/INTEGRATION.md)
-
-</details>
+Bundled IP data is refreshed weekly. Run locally: `npm run update:ip-data`.
 
 ---
 
-## Recommended defense-in-depth
+## Signals
 
-```ts
-// 1. Browser: instant gate on load
-const instant = detectInstantClient(window);
-if (!instant.isLegitClient) block();
+### Instant (boolean flags)
 
-// 2. Browser: send timezone beacon for server checks
-fetch("/api/beacon", {
-  method: "POST",
-  headers: { "X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone },
-});
+Any suspicious flag fails `isLegitClient`.
 
-// 3. Browser: behavioral check while user interacts
-const behavioral = await createBehavioralClientDetector({ context: window }).observe(10_000);
-if (!behavioral.isLegitClient) challenge();
+| Flag | Triggers when |
+|------|---------------|
+| `isWebDriver` | `navigator.webdriver === true` |
+| `isPhantomJS` | PhantomJS globals present |
+| `isNightmare` | Nightmare.js marker |
+| `isSelenium` | Selenium document markers |
+| `isDomAutomation` | Chrome DOM automation globals |
+| `isHeadless` | WebDriver or HeadlessChrome UA |
+| `isSuspiciousResolution` | Screen < 136×170 |
+| `isUserAgentValid` | UA does not start with `Mozilla/5.0 (` |
+| `isWebGLSupported` | No WebGL context |
+| `isModern` | Below Chrome 121 / Firefox 128 / Safari 16.4 |
+| `isMissingChromeObject` | Chromium without `chrome.runtime` |
+| `isSoftwareRenderer` | SwiftShader / llvmpipe WebGL |
+| `isSuspiciousWindowDimensions` | No browser chrome + origin placement |
+| `isEmptyPlugins` | Zero plugins on Chromium |
+| `isAutomationArtifacts` | ChromeDriver / Playwright markers |
+| `isSuspiciousWebDriverDescriptor` | Patched `navigator.webdriver` |
+| `isShaderF16Supported` | Async — missing WebGPU `shader-f16` on Chromium |
 
-// 4. Server: validate every API request
-const server = await detectServerClientAsync({ clientIp: req.ip, /* ... */ });
-if (!server.isLegitClient) return res.status(403).end();
-```
+### Behavioral (weighted)
 
-> **Tip:** No single layer is bulletproof. Combine instant + server for best coverage; add behavioral for high-value flows (signup, checkout).
+| ID | Weight | Confidence | Description |
+|----|--------|------------|-------------|
+| `no-mouse-activity` | 0.20 | low | Clicks without mouse moves |
+| `click-without-mouse-movement` | 0.35 | high | Click with no recent mouse path |
+| `linear-mouse-movement` | 0.25 | medium | Straight path, uniform speed |
+| `teleport-mouse` | 0.40 | high | Implausible cursor jumps |
+| `linear-scroll` | 0.30 | medium | Uniform scroll deltas/timing |
+| `linear-typing` | 0.35 | high | Robotic or superhuman intervals |
+| `synthetic-events` | 0.50 | high | `isTrusted === false` |
 
----
+### Server (weighted)
 
-## Examples
+| ID | Weight | Confidence | Description |
+|----|--------|------------|-------------|
+| `timezone-mismatch` | 0.50 | high | Client TZ ≠ GeoIP TZ |
+| `known-suspicious-tls` | 0.55 | high | JA3 matches Python/curl/Go/Java |
+| `tls-user-agent-mismatch` | 0.50 | high | JA3 conflicts with User-Agent |
+| `missing-tls-fingerprint` | 0.25 | medium | Browser UA without JA3 |
+| `accept-language-geo-mismatch` | 0.20 | low | Accept-Language missing GeoIP country |
+| `datacenter-browser-mismatch` | 0.35 | medium | Datacenter IP + browser UA |
+| `abuse-listed-ip` | 0.60 | high | AbuseIPDB 30-day blocklist |
+| `icloud-private-relay` | 0.15 | low | iCloud Private Relay egress |
 
-### Express middleware
-
-```ts
-import { detectServerClientAsync } from "is-suspicious-client";
-
-export async function botGuard(req, res, next) {
-  const result = await detectServerClientAsync({
-    clientIp: req.ip,
-    clientTimezone: req.headers["x-timezone"],
-    userAgent: req.headers["user-agent"],
-    acceptLanguage: req.headers["accept-language"],
-    tlsFingerprint: req.headers["x-ja3-hash"],
-  });
-
-  if (!result.isLegitClient) {
-    return res.status(403).json({ error: "suspicious_client", signals: result.signals });
-  }
-
-  next();
-}
-```
-
-### Next.js App Router
-
-```tsx
-// app/layout.tsx
-"use client";
-import { useEffect } from "react";
-import { detectInstantClient } from "is-suspicious-client";
-
-export default function RootLayout({ children }) {
-  useEffect(() => {
-    if (!detectInstantClient(window).isLegitClient) {
-      window.location.href = "/blocked";
-    }
-  }, []);
-
-  return <html><body>{children}</body></html>;
-}
-```
-
-### Vanilla browser + server beacon
-
-```html
-<script type="module">
-  import { detectInstantClient } from "https://esm.sh/is-suspicious-client";
-
-  if (!detectInstantClient(window).isLegitClient) {
-    document.body.innerHTML = "Access denied.";
-  }
-
-  // Help server-side timezone check
-  fetch("/api/beacon", {
-    headers: {
-      "X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
-    },
-  });
-</script>
-```
-
-More examples: [docs/INTEGRATION.md](docs/INTEGRATION.md)
+**Bundled IP data:** `data/datacenter_ip_ranges.csv` (ipcat), `data/abuse_ip_db_30d_ips.csv` (AbuseIPDB), `data/icloud_private_relay_ip_ranges.csv` (Apple).
 
 ---
 
-## API at a glance
+## API
 
 ```ts
 import {
@@ -306,23 +233,19 @@ import {
 } from "is-suspicious-client";
 ```
 
-Full reference: **[docs/API.md](docs/API.md)**
-
----
-
-## Configuration
+`detectSuspiciousClient` / `detectSuspiciousClientAsync` are deprecated aliases.
 
 ### Server options
 
 ```ts
 detectServerClientAsync(context, {
-  dataDir: "./custom-data",       // override bundled blocklists
-  lookupGeo: true,                // doc999tor-fast-geoip lookup
-  checkIpLists: true,             // abuse / datacenter / icloud lists
-  timezoneToleranceMinutes: 60,   // IP vs client TZ offset tolerance
-  scoreThreshold: 0.5,            // below = isLegitClient
-  requireTlsFingerprint: false,   // flag browser UA without JA3
-  suspiciousTlsFingerprints: [],  // custom JA3 hashes
+  dataDir: "./custom-data",
+  lookupGeo: true,
+  checkIpLists: true,
+  timezoneToleranceMinutes: 60,
+  scoreThreshold: 0.5,
+  requireTlsFingerprint: false,
+  suspiciousTlsFingerprints: [],
 });
 ```
 
@@ -334,43 +257,83 @@ createBehavioralClientDetector({
   minObservationMs: 3_000,
   scoreThreshold: 0.55,
   pollIntervalMs: 1_000,
-  onUpdate: (result) => { /* live score */ },
+  onUpdate: (result) => {},
 });
+```
+
+---
+
+## Examples
+
+### Defense in depth
+
+```ts
+const instant = detectInstantClient(window);
+if (!instant.isLegitClient) block();
+
+fetch("/api/beacon", {
+  headers: { "X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone },
+});
+
+const behavioral = await createBehavioralClientDetector({ context: window }).observe(10_000);
+if (!behavioral.isLegitClient) challenge();
+
+const server = await detectServerClientAsync({ clientIp: req.ip /* ... */ });
+if (!server.isLegitClient) return res.status(403).end();
+```
+
+### Express middleware
+
+```ts
+import { detectServerClientAsync } from "is-suspicious-client";
+
+app.use(async (req, res, next) => {
+  const result = await detectServerClientAsync({
+    clientIp: req.ip,
+    clientTimezone: req.headers["x-timezone"],
+    userAgent: req.headers["user-agent"],
+    tlsFingerprint: req.headers["x-ja3-hash"],
+  });
+
+  if (!result.isLegitClient) {
+    return res.status(403).json({ signals: result.signals });
+  }
+  next();
+});
+```
+
+### Next.js client guard
+
+```tsx
+"use client";
+import { useEffect } from "react";
+import { detectInstantClient } from "is-suspicious-client";
+
+export function BotGuard({ children }) {
+  useEffect(() => {
+    if (!detectInstantClient(window).isLegitClient) {
+      window.location.href = "/blocked";
+    }
+  }, []);
+  return children;
+}
 ```
 
 ---
 
 ## FAQ
 
-<details>
-<summary><strong>Can client-side checks be bypassed?</strong></summary>
+**Can client-side checks be bypassed?**  
+Yes. Use instant + behavioral for friction; server detection for authoritative decisions.
 
-Yes — anything in JavaScript can be patched. Use **instant + behavioral** for UX gating and friction, and **server detection** for authoritative decisions. Never rely on client-side alone for security-critical actions.
-</details>
+**False positives?**  
+Possible with privacy browsers, VPNs, iCloud Relay, corporate proxies, VMs. Tune `scoreThreshold`.
 
-<details>
-<summary><strong>What about false positives?</strong></summary>
+**How often is IP data updated?**  
+Weekly (Mondays 04:00 UTC). Run `npm run update:ip-data` locally anytime.
 
-Possible on: privacy browsers (Brave, Firefox RFP), VPN users, iCloud Private Relay, corporate proxies, VMs with software rendering, and fresh browser profiles with no plugins. Tune `scoreThreshold` and treat signals as risk scores, not hard blocks.
-</details>
-
-<details>
-<summary><strong>How often is IP data updated?</strong></summary>
-
-Weekly via GitHub Actions (Mondays 04:00 UTC). Lists: AbuseIPDB 30-day, iCloud Private Relay egress, ipcat datacenter ranges. Run `npm run update:ip-data` locally anytime.
-</details>
-
-<details>
-<summary><strong>Does it work without bundlers?</strong></summary>
-
-Yes. Published as ESM + CJS with TypeScript types. Use with Vite, Webpack, Next.js, or `esm.sh` in the browser.
-</details>
-
-<details>
-<summary><strong>What happened to <code>detectSuspiciousClient</code>?</strong></summary>
-
-It's still exported as a deprecated alias for `detectInstantClient`.
-</details>
+**Works without bundlers?**  
+Yes — ESM + CJS + types. Use with Vite, Webpack, Next.js, or `esm.sh`.
 
 ---
 
@@ -380,14 +343,11 @@ It's still exported as a deprecated alias for `detectInstantClient`.
 git clone https://github.com/okasi/is-suspicious-client.git
 cd is-suspicious-client
 npm install
-npm test              # 39 tests
+npm test
 npm run build
-npm run update:ip-data  # refresh blocklists
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
-
----
+See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 
 ## License
 
@@ -397,7 +357,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
 <div align="center">
 
-**If this saved you time, consider starring the repo — it helps others find it.**
+**If this saved you time, consider starring the repo.**
 
 [![GitHub stars](https://img.shields.io/github/stars/okasi/is-suspicious-client?style=social)](https://github.com/okasi/is-suspicious-client)
 

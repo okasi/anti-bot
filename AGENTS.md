@@ -1,0 +1,132 @@
+# AGENTS.md
+
+Guidance for AI agents and contributors working on **is-suspicious-client**.
+
+## Project overview
+
+TypeScript npm library with three detection layers:
+
+| Layer | Entry point | Location |
+|-------|-------------|----------|
+| Instant (browser) | `detectInstantClient` | `src/detectSuspiciousClient.ts`, `src/checks.ts`, `src/webgpu.ts` |
+| Behavioral (browser) | `createBehavioralClientDetector` | `src/behavioral/` |
+| Server (Node/edge) | `detectServerClientAsync` | `src/server/` |
+
+Public API is re-exported from `src/index.ts`. Build output: `dist/` (tsup, ESM + CJS).
+
+## Repository layout
+
+```
+src/
+  detectSuspiciousClient.ts   # instant detection + deprecated aliases
+  checks.ts                   # high-value browser checks
+  webgpu.ts                   # shader-f16 + isChromiumBrowser
+  behavioral/
+    analysis.ts               # mouse/scroll/typing heuristics
+    scoring.ts                # weighted score aggregation
+    detector.ts               # DOM event listener lifecycle
+    types.ts
+  server/
+    geoip.ts                  # doc999tor-fast-geoip wrapper
+    ipLists.ts                # abuse/datacenter/icloud CIDR matching
+    enrich.ts                 # auto-fill context from clientIp
+    analysis.ts               # buildServerSignals
+    scoring.ts                # detectServerClient(Async)
+    tls.ts                    # JA3 blocklist + UA mismatch
+    timezone.ts               # TZ offset + accept-language checks
+    types.ts
+data/                         # bundled blocklists (shipped in npm package)
+scripts/update-ip-data.ts     # fetches and writes data/*.csv
+test/                         # vitest
+.github/workflows/
+  ci.yml                      # typecheck + test + build (Node 24)
+  update-ip-data.yml          # weekly blocklist refresh
+```
+
+## Commands
+
+```bash
+npm install
+npm run typecheck
+npm test
+npm run build
+npm run update:ip-data   # refresh data/*.csv from upstream sources
+```
+
+Always run `npm run typecheck && npm test && npm run build` before committing.
+
+## Conventions
+
+- **Imports at top of file** — no inline imports
+- **Exhaustive switch** — use `never` in default case for discriminated unions
+- **Minimal scope** — focused diffs, match existing style
+- **Tests required** for new signals and non-trivial logic
+- **Documentation** — update `README.md` (user-facing) and `AGENTS.md` (architecture) only. Do not add other doc files.
+
+## Adding a detection signal
+
+### Instant (browser)
+
+1. Add check in `src/checks.ts` or `detectSuspiciousClient.ts`
+2. Add boolean field to `SuspiciousClientResult` in `src/types.ts`
+3. Include in `computeIsLegitClient`
+4. Add test in `test/detectSuspiciousClient.test.ts`
+5. Document flag in `README.md` signals table
+
+### Behavioral
+
+1. Add heuristic in `src/behavioral/analysis.ts`
+2. Register in `buildBehavioralSignals` with `weight` and `confidence`
+3. Add test in `test/behavioral.test.ts`
+4. Document in `README.md`
+
+### Server
+
+1. Add check in `src/server/analysis.ts` or dedicated module
+2. Extend `ServerClientContext` if new input is needed
+3. Register signal in `buildServerSignals`
+4. Add test in `test/server.test.ts` (use temp `dataDir` fixtures)
+5. Document in `README.md`
+
+Prefer low false-positive signals. Use weighted scoring for ambiguous checks.
+
+## IP blocklists
+
+**Do not hand-edit** `data/*.csv`. Update `scripts/update-ip-data.ts` instead.
+
+| File | Source |
+|------|--------|
+| `abuse_ip_db_30d_ips.csv` | `borestad/blocklist-abuseipdb` (all countries) |
+| `icloud_private_relay_ip_ranges.csv` | `mask-api.icloud.com` (all countries, `cidr,country`) |
+| `datacenter_ip_ranges.csv` | `client9/ipcat` datacenters.csv |
+
+Weekly refresh: `.github/workflows/update-ip-data.yml`  
+Datacenter detection: IP matched against ipcat ranges in `src/server/ipLists.ts`  
+GeoIP: `doc999tor-fast-geoip` via `lookupClientIpGeo` when `clientIp` is set
+
+## Scoring formula
+
+Behavioral and server modes:
+
+```
+suspicionScore = 1 - Π(1 - weightᵢ)   for each triggered signal
+isLegitClient = suspicionScore < scoreThreshold
+```
+
+## Testing notes
+
+- Server tests use `createFixtureDataDir()` with temp CSVs and `resetIpListCheckerCache()`
+- Browser instant tests mock `window` / `navigator` with prototype-based `webdriver`
+- GeoIP tests call real `lookup("8.8.8.8")` — requires `doc999tor-fast-geoip` data in node_modules
+
+## Package publishing
+
+`package.json` `files`: `["dist", "data"]`  
+Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
+
+## Pull request checklist
+
+- [ ] `npm run typecheck && npm test && npm run build` pass
+- [ ] `README.md` updated for user-facing changes
+- [ ] `AGENTS.md` updated if architecture or layout changed
+- [ ] No new documentation files beyond README.md and AGENTS.md
