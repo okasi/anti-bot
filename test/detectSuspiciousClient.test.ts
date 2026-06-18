@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import detectSuspiciousClient, {
+import detectInstantClient, {
+  detectInstantClientAsync,
+  detectSuspiciousClient,
   detectSuspiciousClientAsync,
   isChromiumBrowser,
 } from "../src/detectSuspiciousClient.js";
@@ -73,9 +75,9 @@ function createMockContext(
   } as ExtendedWindow;
 }
 
-describe("detectSuspiciousClient", () => {
+describe("detectInstantClient", () => {
   it("flags a clean browser as legit", () => {
-    const result = detectSuspiciousClient(createMockContext());
+    const result = detectInstantClient(createMockContext());
 
     expect(result.isLegitClient).toBe(true);
     expect(result.isChromium).toBe(true);
@@ -87,8 +89,13 @@ describe("detectSuspiciousClient", () => {
     expect(result.isAutomationArtifacts).toBe(false);
   });
 
+  it("is an alias of detectSuspiciousClient", () => {
+    const context = createMockContext();
+    expect(detectInstantClient(context)).toEqual(detectSuspiciousClient(context));
+  });
+
   it("flags webdriver clients", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         navigator: { webdriver: true },
       }),
@@ -264,6 +271,34 @@ describe("isChromiumBrowser", () => {
         }),
       ),
     ).toBe(false);
+  });
+});
+
+describe("detectInstantClientAsync", () => {
+  it("requires shader-f16 on Chromium browsers", async () => {
+    const context = createMockContext({
+      navigator: {
+        userAgent:
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        gpu: {
+          requestAdapter: vi.fn().mockResolvedValue({
+            features: new Set(["shader-f16"]),
+          }),
+        },
+      } as ExtendedWindow["navigator"],
+    });
+
+    const result = await detectInstantClientAsync(context);
+
+    expect(result.isShaderF16Supported).toBe(true);
+    expect(result.isLegitClient).toBe(true);
+  });
+
+  it("matches the deprecated async alias", async () => {
+    const context = createMockContext();
+    await expect(detectInstantClientAsync(context)).resolves.toEqual(
+      await detectSuspiciousClientAsync(context),
+    );
   });
 });
 

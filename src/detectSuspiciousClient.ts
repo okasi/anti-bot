@@ -113,10 +113,10 @@ function computeIsLegitClient(
 }
 
 /**
- * Synchronous suspicious-client checks (automation, headless, UA, WebGL, etc.).
- * For Chromium WebGPU `shader-f16` validation, use {@link detectSuspiciousClientAsync}.
+ * Instant environment checks (automation, headless, UA, WebGL, etc.).
+ * For Chromium WebGPU `shader-f16` validation, use {@link detectInstantClientAsync}.
  */
-export default function detectSuspiciousClient(
+export function detectInstantClient(
   context: ExtendedWindow,
 ): SuspiciousClientResult {
   const checks = detectSync(context);
@@ -129,10 +129,15 @@ export default function detectSuspiciousClient(
   };
 }
 
+/** @deprecated Use {@link detectInstantClient} */
+export const detectSuspiciousClient = detectInstantClient;
+
+export default detectInstantClient;
+
 /**
- * Full detection including async WebGPU `shader-f16` support on Chromium browsers.
+ * Instant checks plus async WebGPU `shader-f16` support on Chromium browsers.
  */
-export async function detectSuspiciousClientAsync(
+export async function detectInstantClientAsync(
   context: ExtendedWindow,
 ): Promise<SuspiciousClientAsyncResult> {
   const checks = detectSync(context);
@@ -152,6 +157,9 @@ export async function detectSuspiciousClientAsync(
     }),
   };
 }
+
+/** @deprecated Use {@link detectInstantClientAsync} */
+export const detectSuspiciousClientAsync = detectInstantClientAsync;
 
 export {
   isAutomationArtifacts,
