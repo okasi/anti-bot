@@ -356,31 +356,39 @@ Live demo: https://okasi.github.io/anti-bot/ (deployed from `docs/` on push to `
 
 **GitHub Pages setup (one time):** Settings → Pages → Build and deployment → **Deploy from a branch** → Branch: `gh-pages` / `/ (root)`.
 
-### Publish to npm (Trusted Publishing)
+### Publish to npm
 
-Publishing uses **npm Trusted Publishing** (OIDC) — no `NPM_TOKEN` in GitHub.
+npm **does not let you create a package from the website**. The name `anti-bot` is claimed on the **first `npm publish`**. Trusted Publishing is configured **after** that package exists.
 
-#### One-time setup on npmjs.com
-
-1. Log in at https://www.npmjs.com
-2. Open **anti-bot** package settings (create the package name if prompted)
-3. **Trusted publishing** → **GitHub Actions**
-4. Set:
-   - **Organization or user:** `okasi`
-   - **Repository:** `anti-bot`
-   - **Workflow filename:** `publish.yml`
-5. Save
-
-#### Release
+#### Step 1 — First publish (once, from your computer)
 
 ```bash
-git push origin v1.4.0          # tag already exists
-# or bump: npm version patch && git push origin main --follow-tags
+git clone https://github.com/okasi/anti-bot.git
+cd anti-bot
+npm install
+npm run test
+npm run build
+npm login          # opens browser; complete 2FA if asked
+npm publish --access public
 ```
 
-Re-run: **Actions → Publish npm → Run workflow**
+After this, **Packages** on npmjs.com will show `anti-bot` (not "0 packages").
 
-Remove the old `NPM_TOKEN` secret if you added one — it can override OIDC and cause `EOTP` errors.
+#### Step 2 — Enable Trusted Publishing (for GitHub Actions)
+
+1. https://www.npmjs.com/package/anti-bot → **Settings** → **Trusted publishing**
+2. **GitHub Actions** → user `okasi`, repo `anti-bot`, workflow `publish.yml`
+3. Save
+4. Delete the **`NPM_TOKEN`** GitHub secret if you added one (not needed with OIDC)
+
+#### Step 3 — Future releases via Actions
+
+```bash
+npm version patch
+git push origin main --follow-tags
+```
+
+Or re-run **Actions → Publish npm → Run workflow**.
 
 See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 
