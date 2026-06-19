@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-          cache: npm
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm ci
@@ -52,10 +52,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Auth: use ONE of these (configure on npmjs.com):
-      #  A) Repo secret NPM_TOKEN = granular token with "Bypass 2FA" for CI
-      #  B) Trusted Publisher linked to okasi/anti-bot + this workflow (no token)
+      # Trusted Publishing (OIDC) — no NPM_TOKEN. Configure on npmjs.com first.
       - name: Publish to npm
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

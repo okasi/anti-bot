@@ -6,7 +6,7 @@
   "author": "okasi",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/okasi/anti-bot.git"
+    "url": "https://github.com/okasi/anti-bot.git"
   },
   "homepage": "https://okasi.github.io/anti-bot/",
   "bugs": {
