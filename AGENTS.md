@@ -46,6 +46,7 @@ test/                         # vitest unit + patchright browser tests
 .github/workflows/
   ci.yml                      # typecheck + unit + patchright + build (Node 24)
   pages.yml                   # build docs/ and deploy GitHub Pages
+  publish.yml                 # publish to npm on v* tags
   update-ip-data.yml          # weekly blocklist refresh
 ```
 
@@ -138,6 +139,14 @@ isLegitClient = suspicionScore < scoreThreshold
 
 `package.json` `files`: `["dist", "data"]`  
 Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
+
+GitHub Actions (`.github/workflows/publish.yml`) publishes on `v*` tags after CI checks pass.  
+Requires repo secret `NPM_TOKEN` (npm granular token with publish access to `anti-bot`).
+
+```bash
+npm version patch
+git push origin main --follow-tags
+```
 
 ## Pull request checklist
 

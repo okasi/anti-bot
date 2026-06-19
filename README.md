@@ -354,6 +354,21 @@ npm run build:site          # copy browser bundle into docs/ for GitHub Pages
 
 Live demo: https://okasi.github.io/anti-bot/ (deployed from `docs/` on push to `main`).
 
+### Publish to npm (GitHub Actions)
+
+1. Create an npm [granular access token](https://www.npmjs.com/settings/~youruser/tokens) with **Publish** permission for `anti-bot`
+2. Add it as repo secret **`NPM_TOKEN`**: GitHub → Settings → Secrets and variables → Actions
+3. Bump version and push a tag:
+
+```bash
+npm version patch   # updates package.json + package-lock.json
+git push origin main --follow-tags
+```
+
+Publishing runs on every `v*` tag (e.g. `v1.4.0`). The workflow runs tests, builds, then `npm publish --provenance`.
+
+Manual publish: Actions → **Publish npm** → **Run workflow**.
+
 See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 
 ## License
