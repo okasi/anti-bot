@@ -11,83 +11,165 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <div class="hero-pill">Live browser demo</div>
-      <h1>detect-bot-client</h1>
-      <p>
-        Run instant and behavioral client checks in your current browser. Move your mouse,
-        scroll, and type in the interaction zone to see how behavioral scoring reacts.
-      </p>
+    <a class="skip-link" href="#main">Skip to demo</a>
+
+    <header class="site-header">
+      <div class="site-header__inner">
+        <p class="eyebrow">Live browser demo</p>
+        <h1>detect-bot-client</h1>
+        <p class="lede">
+          See instant and behavioral bot checks run in <strong>your</strong> browser. Results update
+          live — no server round-trip.
+        </p>
+        <div class="header-links">
+          <a href="https://www.npmjs.com/package/detect-bot-client">npm</a>
+          <a href="https://github.com/okasi/anti-bot">GitHub</a>
+        </div>
+      </div>
     </header>
 
-    <main class="grid two">
-      <section class="panel">
-        <h2>Instant detection</h2>
-        <p class="hint">Synchronous checks against <code>window</code> and <code>navigator</code>.</p>
-
-        <div id="instant-verdict" class="verdict suspicious">
-          <div>
-            <strong id="instant-label">Analyzing…</strong>
-            <div class="status-line" id="instant-status">Waiting for bundle</div>
+    <main id="main" class="layout">
+      <section class="summary-bar" aria-label="Quick summary">
+        <article class="summary-card" id="summary-instant">
+          <span class="summary-card__label">Instant</span>
+          <span class="summary-card__value" id="summary-instant-value">—</span>
+          <span class="summary-card__meta" id="summary-instant-meta">Run on load</span>
+        </article>
+        <article class="summary-card" id="summary-behavioral">
+          <span class="summary-card__label">Behavioral</span>
+          <span class="summary-card__value" id="summary-behavioral-value">—</span>
+          <span class="summary-card__meta" id="summary-behavioral-meta">Not observed yet</span>
+        </article>
+        <article class="summary-card summary-card--wide">
+          <span class="summary-card__label">Install</span>
+          <div class="install-row">
+            <code class="install-snippet">npm install detect-bot-client</code>
+            <button id="copy-install" class="btn btn--small" type="button">Copy</button>
           </div>
-          <span id="instant-badge" class="badge neutral">—</span>
-        </div>
-
-        <div class="actions">
-          <button id="run-instant" class="primary" type="button">Run instant</button>
-          <button id="run-async" type="button">Run async (+ WebGPU)</button>
-        </div>
-
-        <table aria-label="Instant detection flags">
-          <thead>
-            <tr>
-              <th>Flag</th>
-              <th>Result</th>
-            </tr>
-          </thead>
-          <tbody id="instant-table"></tbody>
-        </table>
+        </article>
       </section>
 
-      <section class="panel">
-        <h2>Behavioral detection</h2>
-        <p class="hint">
-          Observes mouse, scroll, typing, and click patterns for ~3 seconds after you start.
-        </p>
-
-        <div id="behavioral-verdict" class="verdict suspicious">
+      <section class="panel" aria-labelledby="instant-heading">
+        <div class="panel__head">
           <div>
-            <strong id="behavioral-label">Not started</strong>
-            <div class="status-line" id="behavioral-status">Interact below, then start observation</div>
+            <h2 id="instant-heading">Instant detection</h2>
+            <p class="panel__desc">
+              Synchronous checks on <code>window</code> and <code>navigator</code>. Any triggered
+              flag fails <code>isLegitClient</code>.
+            </p>
           </div>
-          <span id="behavioral-badge" class="badge neutral">—</span>
+          <div class="actions">
+            <button id="run-instant" class="btn btn--primary" type="button">Re-run instant</button>
+            <button id="run-async" class="btn" type="button">Run async (+ WebGPU)</button>
+          </div>
         </div>
 
-        <div class="score-bar" aria-hidden="true"><span id="score-fill"></span></div>
-        <div class="status-line" id="score-text">Score: —</div>
+        <div id="instant-verdict" class="verdict verdict--pending" role="status">
+          <div class="verdict__icon" aria-hidden="true">◌</div>
+          <div class="verdict__body">
+            <strong id="instant-label">Analyzing…</strong>
+            <p id="instant-status" class="verdict__meta">Loading detection bundle</p>
+          </div>
+          <span id="instant-badge" class="pill pill--neutral">Pending</span>
+        </div>
+
+        <div class="toolbar" role="group" aria-label="Filter flags">
+          <span class="toolbar__label">Show</span>
+          <button type="button" class="chip chip--active" data-filter="all">All</button>
+          <button type="button" class="chip" data-filter="triggered">Triggered</button>
+          <button type="button" class="chip" data-filter="clear">Clear</button>
+          <span class="toolbar__count" id="instant-count">0 flags</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="flags-table" aria-label="Instant detection flags">
+            <thead>
+              <tr>
+                <th scope="col">Flag</th>
+                <th scope="col">What it checks</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody id="instant-table"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="behavioral-heading">
+        <div class="panel__head">
+          <div>
+            <h2 id="behavioral-heading">Behavioral detection</h2>
+            <p class="panel__desc">
+              Watches mouse, scroll, typing, and clicks for ~3 seconds. Robotic patterns raise the
+              suspicion score above the 0.55 threshold.
+            </p>
+          </div>
+        </div>
+
+        <div id="behavioral-verdict" class="verdict verdict--pending" role="status">
+          <div class="verdict__icon" aria-hidden="true">◌</div>
+          <div class="verdict__body">
+            <strong id="behavioral-label">Not started</strong>
+            <p id="behavioral-status" class="verdict__meta">
+              Interact in the zone below, then start observation
+            </p>
+          </div>
+          <span id="behavioral-badge" class="pill pill--neutral">Pending</span>
+        </div>
+
+        <div class="score-block">
+          <div class="score-block__header">
+            <span>Suspicion score</span>
+            <span id="score-text" class="score-block__value">—</span>
+          </div>
+          <div class="score-track" aria-hidden="true">
+            <span class="score-threshold" title="Threshold 0.55"></span>
+            <span id="score-fill" class="score-fill"></span>
+          </div>
+          <p class="score-legend">
+            <span>0 = human-like</span>
+            <span>0.55 = threshold</span>
+            <span>1 = highly automated</span>
+          </p>
+        </div>
 
         <div class="interaction-zone" id="interaction-zone">
-          <p>Move your mouse here, scroll this page, type below, and click the button.</p>
-          <button id="zone-click" type="button">Click me</button>
-          <input id="zone-input" type="text" placeholder="Type naturally or robotically…" />
+          <h3 class="interaction-zone__title">Try it yourself</h3>
+          <ol class="interaction-zone__steps">
+            <li>Move your mouse around this box</li>
+            <li>Scroll the page a little</li>
+            <li>Type in the field below</li>
+            <li>Click the button</li>
+          </ol>
+          <button id="zone-click" class="btn" type="button">Click me</button>
+          <label class="field">
+            <span class="field__label">Typing sample</span>
+            <input id="zone-input" type="text" placeholder="Type naturally or robotically…" />
+          </label>
         </div>
 
         <div class="actions">
-          <button id="start-behavioral" class="primary" type="button">Observe 3s</button>
-          <button id="inject-webdriver" type="button">Simulate webdriver</button>
-          <button id="inject-playwright" type="button">Simulate Playwright artifact</button>
+          <button id="start-behavioral" class="btn btn--primary" type="button">
+            Observe for 3 seconds
+          </button>
+          <button id="inject-webdriver" class="btn btn--warn" type="button">
+            Simulate webdriver
+          </button>
+          <button id="inject-playwright" class="btn btn--warn" type="button">
+            Simulate Playwright
+          </button>
         </div>
 
-        <ul class="signal-list" id="behavioral-signals"></ul>
+        <h3 class="subsection-title">Behavioral signals</h3>
+        <ul class="signal-grid" id="behavioral-signals" aria-label="Behavioral signals"></ul>
       </section>
     </main>
 
-    <footer>
+    <footer class="site-footer">
       <p>
-        Source:
-        <a href="https://github.com/okasi/anti-bot">github.com/okasi/anti-bot</a>
-        · npm:
-        <a href="https://www.npmjs.com/package/detect-bot-client">detect-bot-client</a>
+        <a href="https://github.com/okasi/anti-bot">Source</a>
+        ·
+        <a href="https://www.npmjs.com/package/detect-bot-client">npm package</a>
       </p>
     </footer>
 
