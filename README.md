@@ -22,6 +22,8 @@ One library. Three layers of defense. Zero external API keys.
 
 Most bot-detection snippets are copy-pasted checks that rot quickly. **is-suspicious-client** gives you a maintained, typed, testable toolkit that covers the full stack:
 
+**[Live demo](https://okasi.github.io/is-suspicious-client/)** — run instant and behavioral checks in your browser.
+
 | Layer | Runs where | Catches |
 |-------|------------|---------|
 | **Instant** | Browser (sync) | WebDriver, Selenium, Playwright, headless Chrome, bad WebGL/WebGPU |
@@ -343,9 +345,14 @@ Yes — ESM + CJS + types. Use with Vite, Webpack, Next.js, or `esm.sh`.
 git clone https://github.com/okasi/is-suspicious-client.git
 cd is-suspicious-client
 npm install
-npm test
+npx patchright install chromium   # once, for browser tests
+npm test                          # unit tests
+npm run test:patchright           # real Chromium via patchright
 npm run build
+npm run build:site          # copy browser bundle into docs/ for GitHub Pages
 ```
+
+Live demo: https://okasi.github.io/is-suspicious-client/ (deployed from `docs/` on push to `main`).
 
 See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 

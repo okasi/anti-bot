@@ -36,10 +36,16 @@ src/
     timezone.ts               # TZ offset + accept-language checks
     types.ts
 data/                         # bundled blocklists (shipped in npm package)
+docs/                         # GitHub Pages demo site (index.html + app.js)
+scripts/build-site.ts         # copies dist/browser.js into docs/
 scripts/update-ip-data.ts     # fetches and writes data/*.csv
-test/                         # vitest
+test/                         # vitest unit + patchright browser tests
+  fixtures/harness.html         # DOM fixtures for browser tests
+  helpers/                      # test server + patchright harness
+  patchright/                   # real Chromium tests via patchright
 .github/workflows/
-  ci.yml                      # typecheck + test + build (Node 24)
+  ci.yml                      # typecheck + unit + patchright + build (Node 24)
+  pages.yml                   # build docs/ and deploy GitHub Pages
   update-ip-data.yml          # weekly blocklist refresh
 ```
 
@@ -48,12 +54,20 @@ test/                         # vitest
 ```bash
 npm install
 npm run typecheck
-npm test
+npm test                    # unit tests (vitest, mocked window)
+npm run test:patchright     # browser tests (patchright + real Chromium)
+npm run test:all            # unit + patchright
 npm run build
+npm run build:site            # GitHub Pages demo in docs/
 npm run update:ip-data   # refresh data/*.csv from upstream sources
 ```
 
-Always run `npm run typecheck && npm test && npm run build` before committing.
+Always run `npm run typecheck && npm run test:all && npm run build` before committing.
+
+Patchright browser tests require `npx patchright install chromium` once after install.
+The browser bundle (`dist/browser.js`, entry `src/browser.ts`) is injected into Patchright's
+isolated execution context via blob URL import — page scripts in the main world are not visible
+to `page.evaluate`.
 
 ## Conventions
 
@@ -116,7 +130,8 @@ isLegitClient = suspicionScore < scoreThreshold
 ## Testing notes
 
 - Server tests use `createFixtureDataDir()` with temp CSVs and `resetIpListCheckerCache()`
-- Browser instant tests mock `window` / `navigator` with prototype-based `webdriver`
+- Browser instant unit tests mock `window` / `navigator` with prototype-based `webdriver`
+- Patchright tests (`test/patchright/`) run detection in real Chromium via `test/helpers/patchright-harness.ts`
 - GeoIP tests call real `lookup("8.8.8.8")` — requires `doc999tor-fast-geoip` data in node_modules
 
 ## Package publishing
@@ -126,7 +141,7 @@ Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
 
 ## Pull request checklist
 
-- [ ] `npm run typecheck && npm test && npm run build` pass
+- [ ] `npm run typecheck && npm run test:all && npm run build` pass
 - [ ] `README.md` updated for user-facing changes
 - [ ] `AGENTS.md` updated if architecture or layout changed
 - [ ] No new documentation files beyond README.md and AGENTS.md

@@ -28,5 +28,11 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Install Patchright Chromium
+        run: npx patchright install chromium
+
+      - name: Patchright browser tests
+        run: npm run test:patchright
+
       - name: Build
         run: npm run build

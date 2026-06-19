@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/okasi/is-suspicious-client.git"
   },
-  "homepage": "https://github.com/okasi/is-suspicious-client#readme",
+  "homepage": "https://okasi.github.io/is-suspicious-client/",
   "bugs": {
     "url": "https://github.com/okasi/is-suspicious-client/issues"
   },
@@ -34,9 +34,12 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:site": "npm run build && tsx scripts/build-site.ts",
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:patchright": "npm run build && vitest run --config vitest.patchright.config.ts",
+    "test:all": "npm run test && npm run test:patchright",
     "typecheck": "tsc --noEmit",
     "update:ip-data": "tsx scripts/update-ip-data.ts",
     "prepublishOnly": "npm run build"
@@ -71,6 +74,7 @@
   "devDependencies": {
     "@types/node": "^22.15.21",
     "@webgpu/types": "^0.1.60",
+    "patchright": "^1.61.0",
     "tsup": "^8.5.0",
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
