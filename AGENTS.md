@@ -45,7 +45,7 @@ test/                         # vitest unit + patchright browser tests
   patchright/                   # real Chromium tests via patchright
 .github/workflows/
   ci.yml                      # typecheck + unit + patchright + build (Node 24)
-  pages.yml                   # build docs/ and deploy GitHub Pages
+  pages.yml                   # build docs/ and push to gh-pages branch
   publish.yml                 # publish to npm on v* tags
   update-ip-data.yml          # weekly blocklist refresh
 ```

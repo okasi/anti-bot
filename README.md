@@ -354,6 +354,8 @@ npm run build:site          # copy browser bundle into docs/ for GitHub Pages
 
 Live demo: https://okasi.github.io/anti-bot/ (deployed from `docs/` on push to `main`).
 
+**GitHub Pages setup (one time):** Settings → Pages → Build and deployment → **Deploy from a branch** → Branch: `gh-pages` / `/ (root)`.
+
 ### Publish to npm (GitHub Actions)
 
 1. Create an npm [granular access token](https://www.npmjs.com/settings/~youruser/tokens) with **Publish** permission for `anti-bot`
