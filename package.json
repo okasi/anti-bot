@@ -1,5 +1,5 @@
 {
-  "name": "anti-bot",
+  "name": "@okasi/anti-bot",
   "version": "1.4.0",
   "description": "Detect bots, headless browsers, and automation — instant browser checks, behavioral scoring, and server-side IP/TLS/timezone validation with bundled blocklists",
   "license": "MIT",

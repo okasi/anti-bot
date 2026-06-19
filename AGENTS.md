@@ -142,7 +142,7 @@ Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
 
 GitHub Actions (`.github/workflows/publish.yml`) publishes via **npm Trusted Publishing** (OIDC).
 
-**First release:** package must be created with a one-time local `npm publish` (npm has no “create package” UI). Then configure Trusted publishing on npmjs.com: `okasi` / `anti-bot` / `publish.yml`.
+**First release:** publish as `@okasi/anti-bot` (scoped — unscoped `anti-bot` conflicts with npm package `antibot`). One-time local `npm publish --access public`, then Trusted publishing: `okasi` / `anti-bot` / `publish.yml`.
 
 ## Pull request checklist
 
