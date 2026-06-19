@@ -140,12 +140,16 @@ isLegitClient = suspicionScore < scoreThreshold
 `package.json` `files`: `["dist", "data"]`  
 Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
 
-GitHub Actions (`.github/workflows/publish.yml`) publishes on `v*` tags after CI checks pass.  
-Requires repo secret `NPM_TOKEN` (npm granular token with publish access to `anti-bot`).
+GitHub Actions (`.github/workflows/publish.yml`) publishes on `v*` tags after CI checks pass.
+
+**Auth (pick one):**
+- **`NPM_TOKEN` secret** — granular npm token with **Bypass 2FA** enabled (classic Publish tokens fail with `EOTP` in CI)
+- **Trusted Publishing** — link `okasi/anti-bot` + `publish.yml` on npmjs.com (no token)
 
 ```bash
 npm version patch
 git push origin main --follow-tags
+# or: gh workflow run publish.yml --repo okasi/anti-bot
 ```
 
 ## Pull request checklist

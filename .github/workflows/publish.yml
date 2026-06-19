@@ -52,6 +52,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Auth: use ONE of these (configure on npmjs.com):
+      #  A) Repo secret NPM_TOKEN = granular token with "Bypass 2FA" for CI
+      #  B) Trusted Publisher linked to okasi/anti-bot + this workflow (no token)
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:

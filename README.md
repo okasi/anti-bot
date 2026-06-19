@@ -358,18 +358,29 @@ Live demo: https://okasi.github.io/anti-bot/ (deployed from `docs/` on push to `
 
 ### Publish to npm (GitHub Actions)
 
-1. Create an npm [granular access token](https://www.npmjs.com/settings/~youruser/tokens) with **Publish** permission for `anti-bot`
-2. Add it as repo secret **`NPM_TOKEN`**: GitHub → Settings → Secrets and variables → Actions
-3. Bump version and push a tag:
+The workflow runs on `v*` tags (e.g. `v1.4.0`) and via **Actions → Publish npm → Run workflow**.
+
+#### Option A — npm token (quick)
+
+1. npm → **Access Tokens** → **Generate New Token** → **Granular Access Token**
+2. Permissions: **Read and write** for package `anti-bot`
+3. Enable **Bypass two-factor authentication (2FA)** — required for CI; without this you get `EOTP`
+4. Add the token as GitHub repo secret **`NPM_TOKEN`** (Settings → Secrets → Actions)
+
+#### Option B — Trusted Publishing (recommended, no token)
+
+1. npm → **Packages** → add / open `anti-bot` → **Settings** → **Trusted publishing**
+2. Link: owner `okasi`, repo `anti-bot`, workflow `publish.yml`
+3. Remove or leave `NPM_TOKEN` unused; GitHub OIDC handles auth
+
+#### Release
 
 ```bash
-npm version patch   # updates package.json + package-lock.json
+npm version patch   # or use existing version + tag
 git push origin main --follow-tags
 ```
 
-Publishing runs on every `v*` tag (e.g. `v1.4.0`). The workflow runs tests, builds, then `npm publish --provenance`.
-
-Manual publish: Actions → **Publish npm** → **Run workflow**.
+Re-run a failed publish: **Actions → Publish npm → Run workflow** (after fixing auth).
 
 See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 
