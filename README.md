@@ -9,8 +9,8 @@ One library. Three layers of defense. Zero external API keys.
 [![npm version](https://img.shields.io/npm/v/detect-bot-client.svg)](https://www.npmjs.com/package/detect-bot-client)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
-[![CI](https://github.com/okasi/anti-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/okasi/anti-bot/actions/workflows/ci.yml)
-[![IP data updates](https://github.com/okasi/anti-bot/actions/workflows/update-ip-data.yml/badge.svg)](https://github.com/okasi/anti-bot/actions/workflows/update-ip-data.yml)
+[![CI](https://github.com/okasi/detect-bot-client/actions/workflows/ci.yml/badge.svg)](https://github.com/okasi/detect-bot-client/actions/workflows/ci.yml)
+[![IP data updates](https://github.com/okasi/detect-bot-client/actions/workflows/update-ip-data.yml/badge.svg)](https://github.com/okasi/detect-bot-client/actions/workflows/update-ip-data.yml)
 
 [Quick start](#quick-start) · [Detection modes](#detection-modes) · [Signals](#signals) · [API](#api) · [Examples](#examples) · [FAQ](#faq)
 
@@ -22,7 +22,7 @@ One library. Three layers of defense. Zero external API keys.
 
 Most bot-detection snippets are copy-pasted checks that rot quickly. **detect-bot-client** gives you a maintained, typed, testable toolkit that covers the full stack:
 
-**[Live demo](https://okasi.github.io/anti-bot/)** — run instant and behavioral checks in your browser.
+**[Live demo](https://okasi.github.io/detect-bot-client/)** — run instant and behavioral checks in your browser.
 
 | Layer | Runs where | Catches |
 |-------|------------|---------|
@@ -235,8 +235,6 @@ import {
 } from "detect-bot-client";
 ```
 
-`detectSuspiciousClient` / `detectSuspiciousClientAsync` are deprecated aliases.
-
 ### Server options
 
 ```ts
@@ -342,8 +340,8 @@ Yes — ESM + CJS + types. Use with Vite, Webpack, Next.js, or `esm.sh`.
 ## Development
 
 ```bash
-git clone https://github.com/okasi/anti-bot.git
-cd anti-bot
+git clone https://github.com/okasi/detect-bot-client.git
+cd detect-bot-client
 npm install
 npx patchright install chromium   # once, for browser tests
 npm test                          # unit tests
@@ -352,7 +350,7 @@ npm run build
 npm run build:site          # copy browser bundle into docs/ for GitHub Pages
 ```
 
-Live demo: https://okasi.github.io/anti-bot/ (deployed from `docs/` on push to `main`).
+Live demo: https://okasi.github.io/detect-bot-client/ (deployed from `docs/` on push to `main`).
 
 **GitHub Pages setup (one time):** Settings → Pages → Build and deployment → **Deploy from a branch** → Branch: `gh-pages` / `/ (root)`.
 
@@ -363,8 +361,8 @@ npm package: **`detect-bot-client`** (verified available; distinct from older [`
 #### Step 1 — First publish (once, from your computer)
 
 ```bash
-git clone https://github.com/okasi/anti-bot.git
-cd anti-bot
+git clone https://github.com/okasi/detect-bot-client.git
+cd detect-bot-client
 npm install
 npm run test
 npm run build
@@ -375,7 +373,7 @@ npm publish --access public
 #### Step 2 — Enable Trusted Publishing (for GitHub Actions)
 
 1. https://www.npmjs.com/package/detect-bot-client → **Settings** → **Trusted publishing**
-2. **GitHub Actions** → user `okasi`, repo `anti-bot`, workflow `publish.yml`
+2. **GitHub Actions** → user `okasi`, repo `detect-bot-client`, workflow `publish.yml`
 3. Save
 
 #### Step 3 — Future releases via Actions
@@ -399,6 +397,6 @@ See [AGENTS.md](AGENTS.md) for architecture and contributor guidance.
 
 **If this saved you time, consider starring the repo.**
 
-[![GitHub stars](https://img.shields.io/github/stars/okasi/anti-bot?style=social)](https://github.com/okasi/anti-bot)
+[![GitHub stars](https://img.shields.io/github/stars/okasi/detect-bot-client?style=social)](https://github.com/okasi/detect-bot-client)
 
 </div>

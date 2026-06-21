@@ -8,8 +8,8 @@ import {
 } from "./checks.js";
 import type {
   ExtendedWindow,
-  SuspiciousClientAsyncResult,
-  SuspiciousClientResult,
+  InstantClientAsyncResult,
+  InstantClientResult,
 } from "./types.js";
 import { checkShaderF16Support, isChromiumBrowser } from "./webgpu.js";
 
@@ -22,7 +22,7 @@ function parseBrowserVersion(
 }
 
 function detectSync(context: ExtendedWindow): Omit<
-  SuspiciousClientResult,
+  InstantClientResult,
   "isChromium" | "isLegitClient"
 > {
   // Inspired by Cloudflare https://scrapeops.io/web-scraping-playbook/how-to-bypass-cloudflare/#low-level-bypass
@@ -82,7 +82,7 @@ function detectSync(context: ExtendedWindow): Omit<
 }
 
 function computeIsLegitClient(
-  checks: Omit<SuspiciousClientResult, "isLegitClient"> & {
+  checks: Omit<InstantClientResult, "isLegitClient"> & {
     isShaderF16Supported?: boolean | null;
   },
 ): boolean {
@@ -118,7 +118,7 @@ function computeIsLegitClient(
  */
 export function detectInstantClient(
   context: ExtendedWindow,
-): SuspiciousClientResult {
+): InstantClientResult {
   const checks = detectSync(context);
   const isChromium = isChromiumBrowser(context);
 
@@ -129,9 +129,6 @@ export function detectInstantClient(
   };
 }
 
-/** @deprecated Use {@link detectInstantClient} */
-export const detectSuspiciousClient = detectInstantClient;
-
 export default detectInstantClient;
 
 /**
@@ -139,7 +136,7 @@ export default detectInstantClient;
  */
 export async function detectInstantClientAsync(
   context: ExtendedWindow,
-): Promise<SuspiciousClientAsyncResult> {
+): Promise<InstantClientAsyncResult> {
   const checks = detectSync(context);
   const isChromium = isChromiumBrowser(context);
   const shaderF16Supported = isChromium
@@ -157,9 +154,6 @@ export async function detectInstantClientAsync(
     }),
   };
 }
-
-/** @deprecated Use {@link detectInstantClientAsync} */
-export const detectSuspiciousClientAsync = detectInstantClientAsync;
 
 export {
   isAutomationArtifacts,

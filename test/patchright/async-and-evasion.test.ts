@@ -57,21 +57,6 @@ describe("patchright async instant detection", () => {
     await context.close();
   });
 
-  it("deprecated alias matches detectInstantClientAsync", async () => {
-    const { context, page } = await openHarnessPage(browser, server.baseUrl);
-
-    const matches = await page.evaluate(async () => {
-      const detection = (window as any).__detection;
-      const a = await detection.detectInstantClientAsync(window);
-      const b = await detection.detectSuspiciousClientAsync(window);
-      return JSON.stringify(a) === JSON.stringify(b);
-    });
-
-    expect(matches).toBe(true);
-
-    await context.close();
-  });
-
   it("checkShaderF16Support resolves in browser context", async () => {
     const { context, page } = await openHarnessPage(browser, server.baseUrl);
 

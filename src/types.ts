@@ -22,7 +22,7 @@ export interface ExtendedWindow extends Omit<Window, "document" | "navigator"> {
   navigator: ExtendedNavigator;
 }
 
-export interface SuspiciousClientResult {
+export interface InstantClientResult {
   isWebDriver: boolean;
   isPhantomJS: boolean;
   isNightmare: boolean;
@@ -43,7 +43,7 @@ export interface SuspiciousClientResult {
   isLegitClient: boolean;
 }
 
-export interface SuspiciousClientAsyncResult extends SuspiciousClientResult {
+export interface InstantClientAsyncResult extends InstantClientResult {
   /** `true`/`false` on Chromium; `null` when the check does not apply */
   isShaderF16Supported: boolean | null;
 }

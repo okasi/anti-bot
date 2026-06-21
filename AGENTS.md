@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI agents and contributors working on **detect-bot-client** (npm). GitHub repo: [okasi/anti-bot](https://github.com/okasi/anti-bot).
+Guidance for AI agents and contributors working on **detect-bot-client** (npm). GitHub repo: [okasi/detect-bot-client](https://github.com/okasi/detect-bot-client).
 
 ## Project overview
 
@@ -8,7 +8,7 @@ TypeScript npm library with three detection layers:
 
 | Layer | Entry point | Location |
 |-------|-------------|----------|
-| Instant (browser) | `detectInstantClient` | `src/detectSuspiciousClient.ts`, `src/checks.ts`, `src/webgpu.ts` |
+| Instant (browser) | `detectInstantClient` | `src/detectInstantClient.ts`, `src/checks.ts`, `src/webgpu.ts` |
 | Behavioral (browser) | `createBehavioralClientDetector` | `src/behavioral/` |
 | Server (Node/edge) | `detectServerClientAsync` | `src/server/` |
 
@@ -18,7 +18,7 @@ Public API is re-exported from `src/index.ts`. Build output: `dist/` (tsup, ESM 
 
 ```
 src/
-  detectSuspiciousClient.ts   # instant detection + deprecated aliases
+  detectInstantClient.ts        # instant detection entry
   checks.ts                   # high-value browser checks
   webgpu.ts                   # shader-f16 + isChromiumBrowser
   behavioral/
@@ -82,10 +82,10 @@ to `page.evaluate`.
 
 ### Instant (browser)
 
-1. Add check in `src/checks.ts` or `detectSuspiciousClient.ts`
-2. Add boolean field to `SuspiciousClientResult` in `src/types.ts`
+1. Add check in `src/checks.ts` or `detectInstantClient.ts`
+2. Add boolean field to `InstantClientResult` in `src/types.ts`
 3. Include in `computeIsLegitClient`
-4. Add test in `test/detectSuspiciousClient.test.ts`
+4. Add test in `test/detectInstantClient.test.ts`
 5. Document flag in `README.md` signals table
 
 ### Behavioral
@@ -142,7 +142,7 @@ Entry: ESM `dist/index.js`, CJS `dist/index.cjs`, types `dist/index.d.ts`
 
 GitHub Actions (`.github/workflows/publish.yml`) publishes via **npm Trusted Publishing** (OIDC).
 
-**First release:** publish as `detect-bot-client`. One-time local `npm publish --access public`, then Trusted publishing: `okasi` / `anti-bot` / `publish.yml`.
+**First release:** publish as `detect-bot-client`. One-time local `npm publish --access public`, then Trusted publishing: `okasi` / `detect-bot-client` / `publish.yml`.
 
 ## Pull request checklist
 
