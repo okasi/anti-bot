@@ -40,6 +40,35 @@ const behavioralSignals = document.getElementById("behavioral-signals");
 const scoreFill = document.getElementById("score-fill");
 const scoreText = document.getElementById("score-text");
 
+const POSITIVE_FLAGS = new Set([
+  "isUserAgentValid",
+  "isWebGLSupported",
+  "isModern",
+  "isChromium",
+]);
+
+function isFlagBad(key, value) {
+  if (key === "isLegitClient") {
+    return !value;
+  }
+  if (key === "isShaderF16Supported") {
+    return value === false;
+  }
+  if (POSITIVE_FLAGS.has(key)) {
+    return !value;
+  }
+  return Boolean(value);
+}
+
+function badgeForFlag(key, value) {
+  if (key === "isShaderF16Supported" && value === null) {
+    return { tone: "neutral", label: "n/a" };
+  }
+
+  const bad = isFlagBad(key, value);
+  return { tone: bad ? "bad" : "ok", label: bad ? "fail" : "legit" };
+}
+
 function setVerdict(container, labelEl, badgeEl, isLegit, label) {
   container.classList.toggle("legit", isLegit);
   container.classList.toggle("suspicious", !isLegit);
@@ -62,16 +91,9 @@ function renderInstantRows(result) {
     name.innerHTML = `<code>${key}</code><br><span style="color:var(--muted)">${INSTANT_LABELS[key]}</span>`;
 
     const badge = document.createElement("span");
-    if (key === "isLegitClient") {
-      badge.className = `badge ${value ? "ok" : "bad"}`;
-      badge.textContent = value ? "pass" : "fail";
-    } else if (key === "isShaderF16Supported") {
-      badge.className = `badge ${value === null ? "neutral" : value ? "ok" : "bad"}`;
-      badge.textContent = value === null ? "n/a" : value ? "yes" : "no";
-    } else {
-      badge.className = `badge ${value ? "bad" : "ok"}`;
-      badge.textContent = value ? "triggered" : "clear";
-    }
+    const { tone, label } = badgeForFlag(key, value);
+    badge.className = `badge ${tone}`;
+    badge.textContent = label;
 
     state.appendChild(badge);
     row.append(name, state);
@@ -124,8 +146,8 @@ function renderBehavioral(result) {
   behavioralSignals.replaceChildren();
   for (const signal of result.signals) {
     const item = document.createElement("li");
-    item.className = signal.triggered ? "triggered" : "";
-    item.innerHTML = `<span>${signal.id}</span><span>${signal.triggered ? "triggered" : "clear"}</span>`;
+    item.className = signal.triggered ? "fail" : "";
+    item.innerHTML = `<span>${signal.id}</span><span>${signal.triggered ? "fail" : "legit"}</span>`;
     behavioralSignals.appendChild(item);
   }
 }

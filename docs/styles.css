@@ -255,7 +255,7 @@ button:disabled {
   color: var(--muted);
 }
 
-.signal-list li.triggered {
+.signal-list li.fail {
   color: var(--bad);
 }
 
