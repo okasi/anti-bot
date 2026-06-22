@@ -17,8 +17,6 @@ export {
   default,
   detectInstantClient,
   detectInstantClientAsync,
-  detectSuspiciousClient,
-  detectSuspiciousClientAsync,
   isAutomationArtifacts,
   isChromiumBrowser,
   isEmptyPlugins,
@@ -26,7 +24,7 @@ export {
   isSoftwareRenderer,
   isSuspiciousWebDriverDescriptor,
   isSuspiciousWindowDimensions,
-} from "./detectSuspiciousClient.js";
+} from "./detectInstantClient.js";
 export {
   aggregateServerSuspicionScore,
   buildServerSignals,
@@ -74,6 +72,6 @@ export type {
   ExtendedDocument,
   ExtendedNavigator,
   ExtendedWindow,
-  SuspiciousClientAsyncResult,
-  SuspiciousClientResult,
+  InstantClientAsyncResult,
+  InstantClientResult,
 } from "./types.js";

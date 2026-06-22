@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import detectInstantClient, {
   detectInstantClientAsync,
-  detectSuspiciousClient,
-  detectSuspiciousClientAsync,
   isChromiumBrowser,
-} from "../src/detectSuspiciousClient.js";
+} from "../src/detectInstantClient.js";
 import type { ExtendedWindow } from "../src/types.js";
 
 function createWebGLContext(renderer = "ANGLE (NVIDIA GeForce RTX 3080)") {
@@ -89,11 +87,6 @@ describe("detectInstantClient", () => {
     expect(result.isAutomationArtifacts).toBe(false);
   });
 
-  it("is an alias of detectSuspiciousClient", () => {
-    const context = createMockContext();
-    expect(detectInstantClient(context)).toEqual(detectSuspiciousClient(context));
-  });
-
   it("flags webdriver clients", () => {
     const result = detectInstantClient(
       createMockContext({
@@ -107,7 +100,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags selenium markers", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         document: { __selenium_unwrapped: true },
       }),
@@ -118,7 +111,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags suspicious resolutions", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         screen: { width: 100, height: 100 } as ExtendedWindow["screen"],
       }),
@@ -129,7 +122,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags invalid user agents", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         navigator: {
           userAgent: "python-requests/2.31.0",
@@ -142,7 +135,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags Chromium without chrome.runtime", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         chrome: undefined,
       }),
@@ -159,14 +152,14 @@ describe("detectInstantClient", () => {
       createWebGLContext("Google SwiftShader") as never,
     );
 
-    const result = detectSuspiciousClient(context);
+    const result = detectInstantClient(context);
 
     expect(result.isSoftwareRenderer).toBe(true);
     expect(result.isLegitClient).toBe(false);
   });
 
   it("flags suspicious window dimensions", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         outerWidth: 1280,
         outerHeight: 720,
@@ -182,7 +175,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags empty plugins on Chromium", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         navigator: {
           plugins: { length: 0 },
@@ -195,7 +188,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags Playwright artifacts", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         __playwright: true,
       }),
@@ -206,7 +199,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags ChromeDriver document artifacts", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         document: {
           $cdc_asdfasdfasdf: true,
@@ -219,7 +212,7 @@ describe("detectInstantClient", () => {
   });
 
   it("flags own-property webdriver tampering", () => {
-    const result = detectSuspiciousClient(
+    const result = detectInstantClient(
       createMockContext({
         navigator: {
           webdriver: false,
@@ -294,34 +287,6 @@ describe("detectInstantClientAsync", () => {
     expect(result.isLegitClient).toBe(true);
   });
 
-  it("matches the deprecated async alias", async () => {
-    const context = createMockContext();
-    await expect(detectInstantClientAsync(context)).resolves.toEqual(
-      await detectSuspiciousClientAsync(context),
-    );
-  });
-});
-
-describe("detectSuspiciousClientAsync", () => {
-  it("requires shader-f16 on Chromium browsers", async () => {
-    const context = createMockContext({
-      navigator: {
-        userAgent:
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        gpu: {
-          requestAdapter: vi.fn().mockResolvedValue({
-            features: new Set(["shader-f16"]),
-          }),
-        },
-      } as ExtendedWindow["navigator"],
-    });
-
-    const result = await detectSuspiciousClientAsync(context);
-
-    expect(result.isShaderF16Supported).toBe(true);
-    expect(result.isLegitClient).toBe(true);
-  });
-
   it("flags Chromium without shader-f16 support", async () => {
     const context = createMockContext({
       navigator: {
@@ -335,7 +300,7 @@ describe("detectSuspiciousClientAsync", () => {
       } as ExtendedWindow["navigator"],
     });
 
-    const result = await detectSuspiciousClientAsync(context);
+    const result = await detectInstantClientAsync(context);
 
     expect(result.isShaderF16Supported).toBe(false);
     expect(result.isLegitClient).toBe(false);
@@ -349,7 +314,7 @@ describe("detectSuspiciousClientAsync", () => {
       } as ExtendedWindow["navigator"],
     });
 
-    const result = await detectSuspiciousClientAsync(context);
+    const result = await detectInstantClientAsync(context);
 
     expect(result.isShaderF16Supported).toBe(null);
     expect(result.isLegitClient).toBe(true);
